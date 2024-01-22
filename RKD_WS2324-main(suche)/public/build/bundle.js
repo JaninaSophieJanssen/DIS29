@@ -1,5 +1,5 @@
 
-(function(l, r) { if (!l || l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (self.location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(self.document);
+(function(l, r) { if (!l || l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (self.location.host || 'localhost').split(':')[0] + ':35732/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(self.document);
 var app = (function () {
     'use strict';
 
@@ -56665,43 +56665,114 @@ var app = (function () {
     const data = cleaned_data;
 
 
-    const _data = data;
+    //merge data with duplicate "Hauptthema" and "Unterthema"
+    const merge_data = data.reduce((acc, cur) => {
+        const existingObj = acc.find(obj => obj.Hauptthema === cur.Hauptthema && obj.Unterthemen.Unterthema === cur.Unterthemen.Unterthema);
+        if (existingObj) {
+          existingObj.Unterthemen.Professoren = existingObj.Unterthemen.Professoren.concat(cur.Unterthemen.Professoren);
+        } else {
+          acc.push(cur);
+        }
+        return acc;
+      }, []);
 
-    // Erstellen von Arrays mit einzigartigen Werten für verschiedene Kategorien
+      console.log(merge_data);
+
+
+
+    //merge professoren data with the same "Hauptthema" und "Unterthema are"
+    function mergeObjects(data) {
+        const mergedData = [];
+      
+        data.forEach((entry) => {
+          const profsByHauptthemaAndUnterthema = {};
+          const profsToPush = [];
+      
+          entry.Unterthemen.Professoren.forEach((prof) => {
+            const { Id, Schlagworte } = prof;
+            const key = `${entry.Hauptthema}${entry.Unterthemen.Unterthema}${Id}`;
+      
+            if (!profsByHauptthemaAndUnterthema[key]) {
+              profsByHauptthemaAndUnterthema[key] = { ...prof, Schlagworte: [...Schlagworte] };
+            } else {
+              profsByHauptthemaAndUnterthema[key].Schlagworte = [
+                ...new Set([...profsByHauptthemaAndUnterthema[key].Schlagworte, ...Schlagworte])
+              ];
+            }
+          });
+      
+          Object.values(profsByHauptthemaAndUnterthema).forEach((prof) => {
+            profsToPush.push(prof);
+          });
+      
+          mergedData.push({
+            Hauptthema: entry.Hauptthema,
+            Unterthemen: {
+              Professoren: profsToPush,
+              Unterthema: entry.Unterthemen.Unterthema
+            }
+          });
+        });
+      
+        return mergedData;
+      }
+
+    const _data = mergeObjects(merge_data);
+      
+
+    /* const output = [];
+
+    export const _data = mergeObjects(merge_data).forEach((item) => {
+      const existingItem = output.find((outputItem) => outputItem.Hauptthema === item.Hauptthema);
+      if (existingItem) {
+        existingItem.Unterthemen.push(item.Unterthemen);
+      } else {
+        output.push({
+          Hauptthema: item.Hauptthema,
+          Unterthemen: [item.Unterthemen]
+        });
+      }
+    }); */
+
+      
+
     let themengebieteData = [];
+
     let faecherData = [];
-    let unterfaecherData = [];
+
     let personenData = [];
+
     let schlagwoerterData = [];
 
+    for (let i = 0; i < data.length; i++) {
 
-    data.forEach(entry => {
-        themengebieteData.push(entry.Hauptthema);
+        themengebieteData.push(data[i].Hauptthema);
+        let themengebietContainer = data[i];
 
-        entry.Unterthemen.forEach(ut => {
-            faecherData.push(ut.Unterthema);
-            console.log(ut);
-            ut["Unter-Unterthemen"].forEach(uut => {
-                unterfaecherData.push(uut["Name"]);
 
-                uut.Professoren.forEach(prof => {
-                    personenData.push(prof.Name);
 
-                    prof.Schlagworte.forEach(schlagwort => {
-                        schlagwoerterData.push(schlagwort);
-                    });
-                });
-            });
-        });
-    });
+        let currentFach = themengebietContainer.Unterthemen;
 
-    console.log("hello");
-    console.log(unterfaecherData);
+        faecherData.push(currentFach.Unterthema);
+
+        for (let h = 0; h < currentFach.Professoren.length; h++) {
+            let currentProf = currentFach.Professoren[h];
+            let professorName = currentProf.Name;
+            personenData.push(professorName);
+            for (let schlagwortIndex = 0; schlagwortIndex < currentProf.Schlagworte.length; schlagwortIndex++) {
+                let schlagwort = currentProf.Schlagworte[schlagwortIndex];
+                schlagwoerterData.push(schlagwort);
+            }
+        }
+
+    }
 
     const themengebieteArray = [...new Set(themengebieteData)];
+
     const faecherArray = [...new Set(faecherData)];
-    [...new Set(unterfaecherData)];
+
     const personenArray = [...new Set(personenData)];
+
     const schlagwoerterArray = [...new Set(schlagwoerterData)];
 
     /* src\components\AutocompleteItem.svelte generated by Svelte v3.52.0 */
@@ -58331,38 +58402,130 @@ var app = (function () {
 
     function get_each_context$1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[14] = list[i];
+    	child_ctx[10] = list[i];
     	return child_ctx;
     }
 
     function get_each_context_1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[17] = list[i];
+    	child_ctx[13] = list[i];
     	return child_ctx;
     }
 
     function get_each_context_2(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[20] = list[i];
+    	child_ctx[16] = list[i];
     	return child_ctx;
     }
 
-    function get_each_context_3(ctx, list, i) {
-    	const child_ctx = ctx.slice();
-    	child_ctx[23] = list[i];
-    	return child_ctx;
-    }
-
-    function get_each_context_4(ctx, list, i) {
-    	const child_ctx = ctx.slice();
-    	child_ctx[26] = list[i];
-    	return child_ctx;
-    }
-
-    // (74:4) {#if data["Unterthemen"] && themengebiet_open}
+    // (66:8) {#if data["Unterthemen"] && themengebiet_open}
     function create_if_block(ctx) {
+    	let div1;
+    	let div0;
+    	let p;
+    	let t0_value = /*data*/ ctx[0]["Unterthemen"]["Unterthema"] + "";
+    	let t0;
+    	let t1;
+    	let button;
+    	let img;
+    	let img_src_value;
+    	let t2;
+    	let show_if = /*data*/ ctx[0]["Unterthemen"]["Professoren"] && /*fach_list*/ ctx[2].includes(/*data*/ ctx[0]["Unterthemen"]["Unterthema"]);
+    	let mounted;
+    	let dispose;
+    	let if_block = show_if && create_if_block_1(ctx);
+
+    	const block = {
+    		c: function create() {
+    			div1 = element("div");
+    			div0 = element("div");
+    			p = element("p");
+    			t0 = text(t0_value);
+    			t1 = space();
+    			button = element("button");
+    			img = element("img");
+    			t2 = space();
+    			if (if_block) if_block.c();
+    			attr_dev(p, "class", "fachTitle svelte-xi8p6o");
+    			add_location(p, file$3, 68, 20, 1588);
+
+    			if (!src_url_equal(img.src, img_src_value = !/*fach_list*/ ctx[2].includes(/*data*/ ctx[0]["Unterthemen"]["Unterthema"])
+    			? /*arrow_down*/ ctx[4]
+    			: /*arrow_up*/ ctx[5])) attr_dev(img, "src", img_src_value);
+
+    			attr_dev(img, "alt", "arrow_down");
+    			attr_dev(img, "class", "image svelte-xi8p6o");
+    			add_location(img, file$3, 75, 24, 1898);
+    			attr_dev(button, "class", "image_container svelte-xi8p6o");
+    			add_location(button, file$3, 71, 20, 1715);
+    			attr_dev(div0, "class", "topLevelTopic svelte-xi8p6o");
+    			add_location(div0, file$3, 67, 16, 1540);
+    			attr_dev(div1, "class", "secondLevelContainer svelte-xi8p6o");
+    			add_location(div1, file$3, 66, 12, 1489);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div1, anchor);
+    			append_dev(div1, div0);
+    			append_dev(div0, p);
+    			append_dev(p, t0);
+    			append_dev(div0, t1);
+    			append_dev(div0, button);
+    			append_dev(button, img);
+    			append_dev(div1, t2);
+    			if (if_block) if_block.m(div1, null);
+
+    			if (!mounted) {
+    				dispose = listen_dev(button, "click", /*click_handler*/ ctx[9], false, false, false);
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*data*/ 1 && t0_value !== (t0_value = /*data*/ ctx[0]["Unterthemen"]["Unterthema"] + "")) set_data_dev(t0, t0_value);
+
+    			if (dirty & /*fach_list, data*/ 5 && !src_url_equal(img.src, img_src_value = !/*fach_list*/ ctx[2].includes(/*data*/ ctx[0]["Unterthemen"]["Unterthema"])
+    			? /*arrow_down*/ ctx[4]
+    			: /*arrow_up*/ ctx[5])) {
+    				attr_dev(img, "src", img_src_value);
+    			}
+
+    			if (dirty & /*data, fach_list*/ 5) show_if = /*data*/ ctx[0]["Unterthemen"]["Professoren"] && /*fach_list*/ ctx[2].includes(/*data*/ ctx[0]["Unterthemen"]["Unterthema"]);
+
+    			if (show_if) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+    				} else {
+    					if_block = create_if_block_1(ctx);
+    					if_block.c();
+    					if_block.m(div1, null);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div1);
+    			if (if_block) if_block.d();
+    			mounted = false;
+    			dispose();
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block.name,
+    		type: "if",
+    		source: "(66:8) {#if data[\\\"Unterthemen\\\"] && themengebiet_open}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (81:16) {#if data["Unterthemen"]["Professoren"] && fach_list.includes(data["Unterthemen"]["Unterthema"])}
+    function create_if_block_1(ctx) {
     	let each_1_anchor;
-    	let each_value = /*data*/ ctx[0]["Unterthemen"];
+    	let each_value = /*data*/ ctx[0]["Unterthemen"]["Professoren"];
     	validate_each_argument(each_value);
     	let each_blocks = [];
 
@@ -58386,8 +58549,8 @@ var app = (function () {
     			insert_dev(target, each_1_anchor, anchor);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*data, prof_list, onClickProf, arrow_down, arrow_up, unter_fach_list, onClickUnterFach, fach_list, onClickFach*/ 1917) {
-    				each_value = /*data*/ ctx[0]["Unterthemen"];
+    			if (dirty & /*data, prof_list, onClickProf, arrow_down, arrow_up*/ 313) {
+    				each_value = /*data*/ ctx[0]["Unterthemen"]["Professoren"];
     				validate_each_argument(each_value);
     				let i;
 
@@ -58418,165 +58581,29 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block.name,
-    		type: "if",
-    		source: "(74:4) {#if data[\\\"Unterthemen\\\"] && themengebiet_open}",
-    		ctx
-    	});
-
-    	return block;
-    }
-
-    // (85:16) {#if unterthema["Unter-Unterthemen"] && fach_list.includes(unterthema["Unterthema"])}
-    function create_if_block_1(ctx) {
-    	let each_1_anchor;
-    	let each_value_1 = /*unterthema*/ ctx[14]["Unter-Unterthemen"];
-    	validate_each_argument(each_value_1);
-    	let each_blocks = [];
-
-    	for (let i = 0; i < each_value_1.length; i += 1) {
-    		each_blocks[i] = create_each_block_1(get_each_context_1(ctx, each_value_1, i));
-    	}
-
-    	const block = {
-    		c: function create() {
-    			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].c();
-    			}
-
-    			each_1_anchor = empty();
-    		},
-    		m: function mount(target, anchor) {
-    			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(target, anchor);
-    			}
-
-    			insert_dev(target, each_1_anchor, anchor);
-    		},
-    		p: function update(ctx, dirty) {
-    			if (dirty & /*data, prof_list, onClickProf, arrow_down, arrow_up, unter_fach_list, onClickUnterFach*/ 1657) {
-    				each_value_1 = /*unterthema*/ ctx[14]["Unter-Unterthemen"];
-    				validate_each_argument(each_value_1);
-    				let i;
-
-    				for (i = 0; i < each_value_1.length; i += 1) {
-    					const child_ctx = get_each_context_1(ctx, each_value_1, i);
-
-    					if (each_blocks[i]) {
-    						each_blocks[i].p(child_ctx, dirty);
-    					} else {
-    						each_blocks[i] = create_each_block_1(child_ctx);
-    						each_blocks[i].c();
-    						each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
-    					}
-    				}
-
-    				for (; i < each_blocks.length; i += 1) {
-    					each_blocks[i].d(1);
-    				}
-
-    				each_blocks.length = each_value_1.length;
-    			}
-    		},
-    		d: function destroy(detaching) {
-    			destroy_each(each_blocks, detaching);
-    			if (detaching) detach_dev(each_1_anchor);
-    		}
-    	};
-
-    	dispatch_dev("SvelteRegisterBlock", {
-    		block,
     		id: create_if_block_1.name,
     		type: "if",
-    		source: "(85:16) {#if unterthema[\\\"Unter-Unterthemen\\\"] && fach_list.includes(unterthema[\\\"Unterthema\\\"])}",
+    		source: "(81:16) {#if data[\\\"Unterthemen\\\"][\\\"Professoren\\\"] && fach_list.includes(data[\\\"Unterthemen\\\"][\\\"Unterthema\\\"])}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (96:28) {#if UnterUnterthema["Professoren"] && unter_fach_list.includes(UnterUnterthema["Name"])}
+    // (97:28) {#if prof_list.includes(prof["Name"]+data["Unterthemen"]["Unterthema"])}
     function create_if_block_2(ctx) {
-    	let each_1_anchor;
-    	let each_value_2 = /*UnterUnterthema*/ ctx[17]["Professoren"];
-    	validate_each_argument(each_value_2);
-    	let each_blocks = [];
-
-    	for (let i = 0; i < each_value_2.length; i += 1) {
-    		each_blocks[i] = create_each_block_2(get_each_context_2(ctx, each_value_2, i));
-    	}
-
-    	const block = {
-    		c: function create() {
-    			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].c();
-    			}
-
-    			each_1_anchor = empty();
-    		},
-    		m: function mount(target, anchor) {
-    			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(target, anchor);
-    			}
-
-    			insert_dev(target, each_1_anchor, anchor);
-    		},
-    		p: function update(ctx, dirty) {
-    			if (dirty & /*data, prof_list, onClickProf, arrow_down, arrow_up*/ 1129) {
-    				each_value_2 = /*UnterUnterthema*/ ctx[17]["Professoren"];
-    				validate_each_argument(each_value_2);
-    				let i;
-
-    				for (i = 0; i < each_value_2.length; i += 1) {
-    					const child_ctx = get_each_context_2(ctx, each_value_2, i);
-
-    					if (each_blocks[i]) {
-    						each_blocks[i].p(child_ctx, dirty);
-    					} else {
-    						each_blocks[i] = create_each_block_2(child_ctx);
-    						each_blocks[i].c();
-    						each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
-    					}
-    				}
-
-    				for (; i < each_blocks.length; i += 1) {
-    					each_blocks[i].d(1);
-    				}
-
-    				each_blocks.length = each_value_2.length;
-    			}
-    		},
-    		d: function destroy(detaching) {
-    			destroy_each(each_blocks, detaching);
-    			if (detaching) detach_dev(each_1_anchor);
-    		}
-    	};
-
-    	dispatch_dev("SvelteRegisterBlock", {
-    		block,
-    		id: create_if_block_2.name,
-    		type: "if",
-    		source: "(96:28) {#if UnterUnterthema[\\\"Professoren\\\"] && unter_fach_list.includes(UnterUnterthema[\\\"Name\\\"])}",
-    		ctx
-    	});
-
-    	return block;
-    }
-
-    // (107:40) {#if prof_list.includes(prof["Name"])}
-    function create_if_block_3(ctx) {
     	let div;
     	let h30;
     	let t1;
     	let p;
-    	let t2_value = /*prof*/ ctx[20]["Email"] + "";
+    	let t2_value = /*prof*/ ctx[10]["Email"] + "";
     	let t2;
     	let t3;
     	let h31;
     	let t5;
     	let li;
     	let a;
-    	let t6_value = /*prof*/ ctx[20]["Kontaktseite"] + "";
+    	let t6_value = /*prof*/ ctx[10]["Kontaktseite"] + "";
     	let t6;
     	let a_href_value;
     	let t7;
@@ -58587,20 +58614,20 @@ var app = (function () {
     	let h33;
     	let t12;
     	let ul1;
-    	let each_value_4 = /*prof*/ ctx[20]["Links"];
-    	validate_each_argument(each_value_4);
+    	let each_value_2 = /*prof*/ ctx[10]["Links"];
+    	validate_each_argument(each_value_2);
     	let each_blocks_1 = [];
 
-    	for (let i = 0; i < each_value_4.length; i += 1) {
-    		each_blocks_1[i] = create_each_block_4(get_each_context_4(ctx, each_value_4, i));
+    	for (let i = 0; i < each_value_2.length; i += 1) {
+    		each_blocks_1[i] = create_each_block_2(get_each_context_2(ctx, each_value_2, i));
     	}
 
-    	let each_value_3 = /*prof*/ ctx[20]["Schlagworte"];
-    	validate_each_argument(each_value_3);
+    	let each_value_1 = /*prof*/ ctx[10]["Schlagworte"];
+    	validate_each_argument(each_value_1);
     	let each_blocks = [];
 
-    	for (let i = 0; i < each_value_3.length; i += 1) {
-    		each_blocks[i] = create_each_block_3(get_each_context_3(ctx, each_value_3, i));
+    	for (let i = 0; i < each_value_1.length; i += 1) {
+    		each_blocks[i] = create_each_block_1(get_each_context_1(ctx, each_value_1, i));
     	}
 
     	const block = {
@@ -58639,27 +58666,27 @@ var app = (function () {
     			}
 
     			set_style(h30, "text-align", "left");
-    			add_location(h30, file$3, 108, 44, 4387);
+    			add_location(h30, file$3, 98, 32, 3308);
     			set_style(p, "text-align", "left");
     			set_style(p, "margin", "10px");
-    			add_location(p, file$3, 111, 44, 4566);
+    			add_location(p, file$3, 101, 32, 3451);
     			set_style(h31, "text-align", "left");
-    			add_location(h31, file$3, 114, 44, 4767);
-    			attr_dev(a, "href", a_href_value = /*prof*/ ctx[20]["Kontaktseite"]);
-    			add_location(a, file$3, 118, 48, 5047);
+    			add_location(h31, file$3, 104, 32, 3616);
+    			attr_dev(a, "href", a_href_value = /*prof*/ ctx[10]["Kontaktseite"]);
+    			add_location(a, file$3, 108, 36, 3848);
     			set_style(li, "text-align", "left");
     			set_style(li, "margin", "10px");
-    			add_location(li, file$3, 117, 44, 4954);
+    			add_location(li, file$3, 107, 32, 3767);
     			set_style(h32, "text-align", "left");
-    			add_location(h32, file$3, 122, 44, 5301);
+    			add_location(h32, file$3, 112, 32, 4054);
     			set_style(ul0, "overflow-x", "auto");
-    			add_location(ul0, file$3, 125, 44, 5490);
+    			add_location(ul0, file$3, 115, 32, 4207);
     			set_style(h33, "text-align", "left");
-    			add_location(h33, file$3, 134, 44, 6082);
+    			add_location(h33, file$3, 124, 32, 4691);
     			set_style(ul1, "overflow-x", "auto");
-    			add_location(ul1, file$3, 137, 44, 6267);
-    			attr_dev(div, "class", "infoContainer svelte-afisbv");
-    			add_location(div, file$3, 107, 40, 4315);
+    			add_location(ul1, file$3, 127, 32, 4840);
+    			attr_dev(div, "class", "infoContainer svelte-xi8p6o");
+    			add_location(div, file$3, 97, 28, 3248);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -58692,25 +58719,25 @@ var app = (function () {
     			}
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*data*/ 1 && t2_value !== (t2_value = /*prof*/ ctx[20]["Email"] + "")) set_data_dev(t2, t2_value);
-    			if (dirty & /*data*/ 1 && t6_value !== (t6_value = /*prof*/ ctx[20]["Kontaktseite"] + "")) set_data_dev(t6, t6_value);
+    			if (dirty & /*data*/ 1 && t2_value !== (t2_value = /*prof*/ ctx[10]["Email"] + "")) set_data_dev(t2, t2_value);
+    			if (dirty & /*data*/ 1 && t6_value !== (t6_value = /*prof*/ ctx[10]["Kontaktseite"] + "")) set_data_dev(t6, t6_value);
 
-    			if (dirty & /*data*/ 1 && a_href_value !== (a_href_value = /*prof*/ ctx[20]["Kontaktseite"])) {
+    			if (dirty & /*data*/ 1 && a_href_value !== (a_href_value = /*prof*/ ctx[10]["Kontaktseite"])) {
     				attr_dev(a, "href", a_href_value);
     			}
 
     			if (dirty & /*data*/ 1) {
-    				each_value_4 = /*prof*/ ctx[20]["Links"];
-    				validate_each_argument(each_value_4);
+    				each_value_2 = /*prof*/ ctx[10]["Links"];
+    				validate_each_argument(each_value_2);
     				let i;
 
-    				for (i = 0; i < each_value_4.length; i += 1) {
-    					const child_ctx = get_each_context_4(ctx, each_value_4, i);
+    				for (i = 0; i < each_value_2.length; i += 1) {
+    					const child_ctx = get_each_context_2(ctx, each_value_2, i);
 
     					if (each_blocks_1[i]) {
     						each_blocks_1[i].p(child_ctx, dirty);
     					} else {
-    						each_blocks_1[i] = create_each_block_4(child_ctx);
+    						each_blocks_1[i] = create_each_block_2(child_ctx);
     						each_blocks_1[i].c();
     						each_blocks_1[i].m(ul0, null);
     					}
@@ -58720,21 +58747,21 @@ var app = (function () {
     					each_blocks_1[i].d(1);
     				}
 
-    				each_blocks_1.length = each_value_4.length;
+    				each_blocks_1.length = each_value_2.length;
     			}
 
     			if (dirty & /*data*/ 1) {
-    				each_value_3 = /*prof*/ ctx[20]["Schlagworte"];
-    				validate_each_argument(each_value_3);
+    				each_value_1 = /*prof*/ ctx[10]["Schlagworte"];
+    				validate_each_argument(each_value_1);
     				let i;
 
-    				for (i = 0; i < each_value_3.length; i += 1) {
-    					const child_ctx = get_each_context_3(ctx, each_value_3, i);
+    				for (i = 0; i < each_value_1.length; i += 1) {
+    					const child_ctx = get_each_context_1(ctx, each_value_1, i);
 
     					if (each_blocks[i]) {
     						each_blocks[i].p(child_ctx, dirty);
     					} else {
-    						each_blocks[i] = create_each_block_3(child_ctx);
+    						each_blocks[i] = create_each_block_1(child_ctx);
     						each_blocks[i].c();
     						each_blocks[i].m(ul1, null);
     					}
@@ -58744,7 +58771,7 @@ var app = (function () {
     					each_blocks[i].d(1);
     				}
 
-    				each_blocks.length = each_value_3.length;
+    				each_blocks.length = each_value_1.length;
     			}
     		},
     		d: function destroy(detaching) {
@@ -58756,20 +58783,20 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_3.name,
+    		id: create_if_block_2.name,
     		type: "if",
-    		source: "(107:40) {#if prof_list.includes(prof[\\\"Name\\\"])}",
+    		source: "(97:28) {#if prof_list.includes(prof[\\\"Name\\\"]+data[\\\"Unterthemen\\\"][\\\"Unterthema\\\"])}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (127:48) {#each prof["Links"] as link}
-    function create_each_block_4(ctx) {
+    // (117:36) {#each prof["Links"] as link}
+    function create_each_block_2(ctx) {
     	let li;
     	let a;
-    	let t0_value = /*link*/ ctx[26] + "";
+    	let t0_value = /*link*/ ctx[16] + "";
     	let t0;
     	let a_href_value;
     	let t1;
@@ -58780,11 +58807,11 @@ var app = (function () {
     			a = element("a");
     			t0 = text(t0_value);
     			t1 = space();
-    			attr_dev(a, "href", a_href_value = /*link*/ ctx[26]);
-    			add_location(a, file$3, 128, 52, 5742);
+    			attr_dev(a, "href", a_href_value = /*link*/ ctx[16]);
+    			add_location(a, file$3, 118, 40, 4423);
     			set_style(li, "text-align", "left");
     			set_style(li, "margin", "10px");
-    			add_location(li, file$3, 127, 48, 5645);
+    			add_location(li, file$3, 117, 36, 4338);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, li, anchor);
@@ -58793,9 +58820,9 @@ var app = (function () {
     			append_dev(li, t1);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*data*/ 1 && t0_value !== (t0_value = /*link*/ ctx[26] + "")) set_data_dev(t0, t0_value);
+    			if (dirty & /*data*/ 1 && t0_value !== (t0_value = /*link*/ ctx[16] + "")) set_data_dev(t0, t0_value);
 
-    			if (dirty & /*data*/ 1 && a_href_value !== (a_href_value = /*link*/ ctx[26])) {
+    			if (dirty & /*data*/ 1 && a_href_value !== (a_href_value = /*link*/ ctx[16])) {
     				attr_dev(a, "href", a_href_value);
     			}
     		},
@@ -58806,20 +58833,20 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_each_block_4.name,
+    		id: create_each_block_2.name,
     		type: "each",
-    		source: "(127:48) {#each prof[\\\"Links\\\"] as link}",
+    		source: "(117:36) {#each prof[\\\"Links\\\"] as link}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (139:48) {#each prof["Schlagworte"] as wort}
-    function create_each_block_3(ctx) {
+    // (129:36) {#each prof["Schlagworte"] as wort}
+    function create_each_block_1(ctx) {
     	let li;
     	let p0;
-    	let t0_value = /*wort*/ ctx[23] + "";
+    	let t0_value = /*wort*/ ctx[13] + "";
     	let t0;
     	let t1;
     	let p1;
@@ -58831,11 +58858,11 @@ var app = (function () {
     			t0 = text(t0_value);
     			t1 = space();
     			p1 = element("p");
-    			add_location(p0, file$3, 140, 52, 6525);
-    			add_location(p1, file$3, 142, 52, 6644);
+    			add_location(p0, file$3, 130, 40, 5062);
+    			add_location(p1, file$3, 132, 40, 5157);
     			set_style(li, "text-align", "left");
     			set_style(li, "margin", "10px");
-    			add_location(li, file$3, 139, 48, 6428);
+    			add_location(li, file$3, 129, 36, 4977);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, li, anchor);
@@ -58845,7 +58872,7 @@ var app = (function () {
     			append_dev(li, p1);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*data*/ 1 && t0_value !== (t0_value = /*wort*/ ctx[23] + "")) set_data_dev(t0, t0_value);
+    			if (dirty & /*data*/ 1 && t0_value !== (t0_value = /*wort*/ ctx[13] + "")) set_data_dev(t0, t0_value);
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(li);
@@ -58854,149 +58881,31 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_each_block_3.name,
+    		id: create_each_block_1.name,
     		type: "each",
-    		source: "(139:48) {#each prof[\\\"Schlagworte\\\"] as wort}",
+    		source: "(129:36) {#each prof[\\\"Schlagworte\\\"] as wort}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (97:32) {#each UnterUnterthema["Professoren"] as prof}
-    function create_each_block_2(ctx) {
+    // (82:20) {#each data["Unterthemen"]["Professoren"] as prof}
+    function create_each_block$1(ctx) {
     	let div1;
     	let div0;
     	let p;
-    	let t0_value = /*prof*/ ctx[20]["Name"] + "";
+    	let t0_value = /*prof*/ ctx[10]["Name"] + "";
     	let t0;
     	let t1;
     	let button;
     	let img;
     	let img_src_value;
     	let t2;
-    	let show_if = /*prof_list*/ ctx[3].includes(/*prof*/ ctx[20]["Name"]);
+    	let show_if = /*prof_list*/ ctx[3].includes(/*prof*/ ctx[10]["Name"] + /*data*/ ctx[0]["Unterthemen"]["Unterthema"]);
     	let t3;
     	let mounted;
     	let dispose;
-
-    	function click_handler_2() {
-    		return /*click_handler_2*/ ctx[13](/*prof*/ ctx[20]);
-    	}
-
-    	let if_block = show_if && create_if_block_3(ctx);
-
-    	const block = {
-    		c: function create() {
-    			div1 = element("div");
-    			div0 = element("div");
-    			p = element("p");
-    			t0 = text(t0_value);
-    			t1 = space();
-    			button = element("button");
-    			img = element("img");
-    			t2 = space();
-    			if (if_block) if_block.c();
-    			t3 = space();
-    			attr_dev(p, "class", "type_title svelte-afisbv");
-    			add_location(p, file$3, 99, 44, 3689);
-
-    			if (!src_url_equal(img.src, img_src_value = !/*prof_list*/ ctx[3].includes(/*prof*/ ctx[20]["Name"])
-    			? /*arrow_down*/ ctx[5]
-    			: /*arrow_up*/ ctx[6])) attr_dev(img, "src", img_src_value);
-
-    			attr_dev(img, "alt", "arrow_down");
-    			attr_dev(img, "class", "image svelte-afisbv");
-    			add_location(img, file$3, 103, 48, 3992);
-    			attr_dev(button, "class", "image_container svelte-afisbv");
-    			add_location(button, file$3, 102, 44, 3868);
-    			attr_dev(div0, "class", "topLevelTopic svelte-afisbv");
-    			add_location(div0, file$3, 98, 40, 3617);
-    			attr_dev(div1, "class", "fourthLevelContainer svelte-afisbv");
-    			add_location(div1, file$3, 97, 36, 3542);
-    		},
-    		m: function mount(target, anchor) {
-    			insert_dev(target, div1, anchor);
-    			append_dev(div1, div0);
-    			append_dev(div0, p);
-    			append_dev(p, t0);
-    			append_dev(div0, t1);
-    			append_dev(div0, button);
-    			append_dev(button, img);
-    			append_dev(div1, t2);
-    			if (if_block) if_block.m(div1, null);
-    			append_dev(div1, t3);
-
-    			if (!mounted) {
-    				dispose = listen_dev(button, "click", click_handler_2, false, false, false);
-    				mounted = true;
-    			}
-    		},
-    		p: function update(new_ctx, dirty) {
-    			ctx = new_ctx;
-    			if (dirty & /*data*/ 1 && t0_value !== (t0_value = /*prof*/ ctx[20]["Name"] + "")) set_data_dev(t0, t0_value);
-
-    			if (dirty & /*prof_list, data*/ 9 && !src_url_equal(img.src, img_src_value = !/*prof_list*/ ctx[3].includes(/*prof*/ ctx[20]["Name"])
-    			? /*arrow_down*/ ctx[5]
-    			: /*arrow_up*/ ctx[6])) {
-    				attr_dev(img, "src", img_src_value);
-    			}
-
-    			if (dirty & /*prof_list, data*/ 9) show_if = /*prof_list*/ ctx[3].includes(/*prof*/ ctx[20]["Name"]);
-
-    			if (show_if) {
-    				if (if_block) {
-    					if_block.p(ctx, dirty);
-    				} else {
-    					if_block = create_if_block_3(ctx);
-    					if_block.c();
-    					if_block.m(div1, t3);
-    				}
-    			} else if (if_block) {
-    				if_block.d(1);
-    				if_block = null;
-    			}
-    		},
-    		d: function destroy(detaching) {
-    			if (detaching) detach_dev(div1);
-    			if (if_block) if_block.d();
-    			mounted = false;
-    			dispose();
-    		}
-    	};
-
-    	dispatch_dev("SvelteRegisterBlock", {
-    		block,
-    		id: create_each_block_2.name,
-    		type: "each",
-    		source: "(97:32) {#each UnterUnterthema[\\\"Professoren\\\"] as prof}",
-    		ctx
-    	});
-
-    	return block;
-    }
-
-    // (86:20) {#each unterthema["Unter-Unterthemen"] as UnterUnterthema}
-    function create_each_block_1(ctx) {
-    	let div1;
-    	let div0;
-    	let p;
-    	let t0_value = /*UnterUnterthema*/ ctx[17]["Name"] + "";
-    	let t0;
-    	let t1;
-    	let button;
-    	let img;
-    	let img_src_value;
-    	let t2;
-    	let show_if = /*UnterUnterthema*/ ctx[17]["Professoren"] && /*unter_fach_list*/ ctx[4].includes(/*UnterUnterthema*/ ctx[17]["Name"]);
-    	let t3;
-    	let mounted;
-    	let dispose;
-
-    	function click_handler_1() {
-    		return /*click_handler_1*/ ctx[12](/*UnterUnterthema*/ ctx[17]);
-    	}
-
     	let if_block = show_if && create_if_block_2(ctx);
 
     	const block = {
@@ -59011,22 +58920,22 @@ var app = (function () {
     			t2 = space();
     			if (if_block) if_block.c();
     			t3 = space();
-    			attr_dev(p, "class", "type_title svelte-afisbv");
-    			add_location(p, file$3, 88, 32, 2829);
+    			attr_dev(p, "class", "type_title svelte-xi8p6o");
+    			add_location(p, file$3, 84, 32, 2453);
 
-    			if (!src_url_equal(img.src, img_src_value = !/*unter_fach_list*/ ctx[4].includes(/*UnterUnterthema*/ ctx[17]["Name"])
-    			? /*arrow_down*/ ctx[5]
-    			: /*arrow_up*/ ctx[6])) attr_dev(img, "src", img_src_value);
+    			if (!src_url_equal(img.src, img_src_value = !/*prof_list*/ ctx[3].includes(/*prof*/ ctx[10]["Name"] + /*data*/ ctx[0]["Unterthemen"]["Unterthema"])
+    			? /*arrow_down*/ ctx[4]
+    			: /*arrow_up*/ ctx[5])) attr_dev(img, "src", img_src_value);
 
     			attr_dev(img, "alt", "arrow_down");
-    			attr_dev(img, "class", "image svelte-afisbv");
-    			add_location(img, file$3, 92, 37, 3112);
-    			attr_dev(button, "class", "image_container svelte-afisbv");
-    			add_location(button, file$3, 91, 32, 2983);
-    			attr_dev(div0, "class", "topLevelTopic svelte-afisbv");
-    			add_location(div0, file$3, 87, 28, 2769);
-    			attr_dev(div1, "class", "thirdLevelContainer svelte-afisbv");
-    			add_location(div1, file$3, 86, 24, 2707);
+    			attr_dev(img, "class", "image svelte-xi8p6o");
+    			add_location(img, file$3, 91, 36, 2834);
+    			attr_dev(button, "class", "image_container svelte-xi8p6o");
+    			add_location(button, file$3, 87, 32, 2596);
+    			attr_dev(div0, "class", "topLevelTopic svelte-xi8p6o");
+    			add_location(div0, file$3, 83, 28, 2393);
+    			attr_dev(div1, "class", "thirdLevelContainer svelte-xi8p6o");
+    			add_location(div1, file$3, 82, 24, 2331);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div1, anchor);
@@ -59041,21 +58950,31 @@ var app = (function () {
     			append_dev(div1, t3);
 
     			if (!mounted) {
-    				dispose = listen_dev(button, "click", click_handler_1, false, false, false);
+    				dispose = listen_dev(
+    					button,
+    					"click",
+    					function () {
+    						if (is_function(/*onClickProf*/ ctx[8](/*prof*/ ctx[10]["Name"] + /*data*/ ctx[0]["Unterthemen"]["Unterthema"]))) /*onClickProf*/ ctx[8](/*prof*/ ctx[10]["Name"] + /*data*/ ctx[0]["Unterthemen"]["Unterthema"]).apply(this, arguments);
+    					},
+    					false,
+    					false,
+    					false
+    				);
+
     				mounted = true;
     			}
     		},
     		p: function update(new_ctx, dirty) {
     			ctx = new_ctx;
-    			if (dirty & /*data*/ 1 && t0_value !== (t0_value = /*UnterUnterthema*/ ctx[17]["Name"] + "")) set_data_dev(t0, t0_value);
+    			if (dirty & /*data*/ 1 && t0_value !== (t0_value = /*prof*/ ctx[10]["Name"] + "")) set_data_dev(t0, t0_value);
 
-    			if (dirty & /*unter_fach_list, data*/ 17 && !src_url_equal(img.src, img_src_value = !/*unter_fach_list*/ ctx[4].includes(/*UnterUnterthema*/ ctx[17]["Name"])
-    			? /*arrow_down*/ ctx[5]
-    			: /*arrow_up*/ ctx[6])) {
+    			if (dirty & /*prof_list, data*/ 9 && !src_url_equal(img.src, img_src_value = !/*prof_list*/ ctx[3].includes(/*prof*/ ctx[10]["Name"] + /*data*/ ctx[0]["Unterthemen"]["Unterthema"])
+    			? /*arrow_down*/ ctx[4]
+    			: /*arrow_up*/ ctx[5])) {
     				attr_dev(img, "src", img_src_value);
     			}
 
-    			if (dirty & /*data, unter_fach_list*/ 17) show_if = /*UnterUnterthema*/ ctx[17]["Professoren"] && /*unter_fach_list*/ ctx[4].includes(/*UnterUnterthema*/ ctx[17]["Name"]);
+    			if (dirty & /*prof_list, data*/ 9) show_if = /*prof_list*/ ctx[3].includes(/*prof*/ ctx[10]["Name"] + /*data*/ ctx[0]["Unterthemen"]["Unterthema"]);
 
     			if (show_if) {
     				if (if_block) {
@@ -59080,122 +58999,9 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_each_block_1.name,
-    		type: "each",
-    		source: "(86:20) {#each unterthema[\\\"Unter-Unterthemen\\\"] as UnterUnterthema}",
-    		ctx
-    	});
-
-    	return block;
-    }
-
-    // (75:8) {#each data["Unterthemen"] as unterthema}
-    function create_each_block$1(ctx) {
-    	let div1;
-    	let div0;
-    	let p;
-    	let t0_value = /*unterthema*/ ctx[14]["Unterthema"] + "";
-    	let t0;
-    	let t1;
-    	let button;
-    	let img;
-    	let img_src_value;
-    	let t2;
-    	let show_if = /*unterthema*/ ctx[14]["Unter-Unterthemen"] && /*fach_list*/ ctx[2].includes(/*unterthema*/ ctx[14]["Unterthema"]);
-    	let t3;
-    	let mounted;
-    	let dispose;
-
-    	function click_handler() {
-    		return /*click_handler*/ ctx[11](/*unterthema*/ ctx[14]);
-    	}
-
-    	let if_block = show_if && create_if_block_1(ctx);
-
-    	const block = {
-    		c: function create() {
-    			div1 = element("div");
-    			div0 = element("div");
-    			p = element("p");
-    			t0 = text(t0_value);
-    			t1 = space();
-    			button = element("button");
-    			img = element("img");
-    			t2 = space();
-    			if (if_block) if_block.c();
-    			t3 = space();
-    			attr_dev(p, "class", "fachTitle svelte-afisbv");
-    			add_location(p, file$3, 77, 20, 2104);
-
-    			if (!src_url_equal(img.src, img_src_value = !/*fach_list*/ ctx[2].includes(/*unterthema*/ ctx[14]["Unterthema"])
-    			? /*arrow_down*/ ctx[5]
-    			: /*arrow_up*/ ctx[6])) attr_dev(img, "src", img_src_value);
-
-    			attr_dev(img, "alt", "arrow_down");
-    			attr_dev(img, "class", "image svelte-afisbv");
-    			add_location(img, file$3, 81, 24, 2334);
-    			attr_dev(button, "class", "image_container svelte-afisbv");
-    			add_location(button, file$3, 80, 20, 2222);
-    			attr_dev(div0, "class", "topLevelTopic svelte-afisbv");
-    			add_location(div0, file$3, 76, 16, 2056);
-    			attr_dev(div1, "class", "secondLevelContainer svelte-afisbv");
-    			add_location(div1, file$3, 75, 12, 2005);
-    		},
-    		m: function mount(target, anchor) {
-    			insert_dev(target, div1, anchor);
-    			append_dev(div1, div0);
-    			append_dev(div0, p);
-    			append_dev(p, t0);
-    			append_dev(div0, t1);
-    			append_dev(div0, button);
-    			append_dev(button, img);
-    			append_dev(div1, t2);
-    			if (if_block) if_block.m(div1, null);
-    			append_dev(div1, t3);
-
-    			if (!mounted) {
-    				dispose = listen_dev(button, "click", click_handler, false, false, false);
-    				mounted = true;
-    			}
-    		},
-    		p: function update(new_ctx, dirty) {
-    			ctx = new_ctx;
-    			if (dirty & /*data*/ 1 && t0_value !== (t0_value = /*unterthema*/ ctx[14]["Unterthema"] + "")) set_data_dev(t0, t0_value);
-
-    			if (dirty & /*fach_list, data*/ 5 && !src_url_equal(img.src, img_src_value = !/*fach_list*/ ctx[2].includes(/*unterthema*/ ctx[14]["Unterthema"])
-    			? /*arrow_down*/ ctx[5]
-    			: /*arrow_up*/ ctx[6])) {
-    				attr_dev(img, "src", img_src_value);
-    			}
-
-    			if (dirty & /*data, fach_list*/ 5) show_if = /*unterthema*/ ctx[14]["Unter-Unterthemen"] && /*fach_list*/ ctx[2].includes(/*unterthema*/ ctx[14]["Unterthema"]);
-
-    			if (show_if) {
-    				if (if_block) {
-    					if_block.p(ctx, dirty);
-    				} else {
-    					if_block = create_if_block_1(ctx);
-    					if_block.c();
-    					if_block.m(div1, t3);
-    				}
-    			} else if (if_block) {
-    				if_block.d(1);
-    				if_block = null;
-    			}
-    		},
-    		d: function destroy(detaching) {
-    			if (detaching) detach_dev(div1);
-    			if (if_block) if_block.d();
-    			mounted = false;
-    			dispose();
-    		}
-    	};
-
-    	dispatch_dev("SvelteRegisterBlock", {
-    		block,
     		id: create_each_block$1.name,
     		type: "each",
-    		source: "(75:8) {#each data[\\\"Unterthemen\\\"] as unterthema}",
+    		source: "(82:20) {#each data[\\\"Unterthemen\\\"][\\\"Professoren\\\"] as prof}",
     		ctx
     	});
 
@@ -59228,22 +59034,22 @@ var app = (function () {
     			img = element("img");
     			t2 = space();
     			if (if_block) if_block.c();
-    			attr_dev(p, "class", "type_title svelte-afisbv");
-    			add_location(p, file$3, 66, 8, 1628);
+    			attr_dev(p, "class", "type_title svelte-xi8p6o");
+    			add_location(p, file$3, 53, 12, 1065);
 
     			if (!src_url_equal(img.src, img_src_value = !/*themengebiet_open*/ ctx[1]
-    			? /*arrow_down*/ ctx[5]
-    			: /*arrow_up*/ ctx[6])) attr_dev(img, "src", img_src_value);
+    			? /*arrow_down*/ ctx[4]
+    			: /*arrow_up*/ ctx[5])) attr_dev(img, "src", img_src_value);
 
     			attr_dev(img, "alt", "arrow_down");
-    			attr_dev(img, "class", "image svelte-afisbv");
-    			add_location(img, file$3, 70, 12, 1775);
-    			attr_dev(button, "class", "image_container svelte-afisbv");
-    			add_location(button, file$3, 69, 8, 1705);
-    			attr_dev(div0, "class", "topLevelTopic svelte-afisbv");
-    			add_location(div0, file$3, 65, 4, 1592);
-    			attr_dev(div1, "class", "topLevelContainer svelte-afisbv");
-    			add_location(div1, file$3, 64, 0, 1556);
+    			attr_dev(img, "class", "image svelte-xi8p6o");
+    			add_location(img, file$3, 60, 16, 1266);
+    			attr_dev(button, "class", "image_container svelte-xi8p6o");
+    			add_location(button, file$3, 56, 12, 1154);
+    			attr_dev(div0, "class", "topLevelTopic svelte-xi8p6o");
+    			add_location(div0, file$3, 52, 8, 1025);
+    			attr_dev(div1, "class", "topLevelContainer svelte-xi8p6o");
+    			add_location(div1, file$3, 49, 4, 975);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -59260,7 +59066,7 @@ var app = (function () {
     			if (if_block) if_block.m(div1, null);
 
     			if (!mounted) {
-    				dispose = listen_dev(button, "click", /*onClickThemen*/ ctx[7], false, false, false);
+    				dispose = listen_dev(button, "click", /*onClickThemen*/ ctx[6], false, false, false);
     				mounted = true;
     			}
     		},
@@ -59268,8 +59074,8 @@ var app = (function () {
     			if (dirty & /*data*/ 1 && t0_value !== (t0_value = /*data*/ ctx[0]["Hauptthema"] + "")) set_data_dev(t0, t0_value);
 
     			if (dirty & /*themengebiet_open*/ 2 && !src_url_equal(img.src, img_src_value = !/*themengebiet_open*/ ctx[1]
-    			? /*arrow_down*/ ctx[5]
-    			: /*arrow_up*/ ctx[6])) {
+    			? /*arrow_down*/ ctx[4]
+    			: /*arrow_up*/ ctx[5])) {
     				attr_dev(img, "src", img_src_value);
     			}
 
@@ -59313,14 +59119,12 @@ var app = (function () {
     	let arrow_down = "./images/arrow_down.png";
     	let arrow_up = "./images/arrow_up.png";
     	let { data } = $$props;
-    	console.log(data);
 
     	//variables needed for open and close
     	let themengebiet_open = false;
 
     	let fach_list = [];
     	let prof_list = [];
-    	let unter_fach_list = [];
 
     	//function to open "themengebiete"
     	function onClickThemen() {
@@ -59339,19 +59143,6 @@ var app = (function () {
     		}
 
     		$$invalidate(2, fach_list);
-    	}
-
-    	function onClickUnterFach(fach) {
-    		console.log(fach);
-
-    		if (unter_fach_list.includes(fach)) {
-    			var index = unter_fach_list.indexOf(fach);
-    			unter_fach_list.splice(index, 1);
-    		} else if (!unter_fach_list.includes(fach)) {
-    			unter_fach_list.push(fach);
-    		}
-
-    		$$invalidate(4, unter_fach_list);
     	}
 
     	//function to open "prof"
@@ -59378,9 +59169,7 @@ var app = (function () {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console_1.warn(`<TopicComponent> was created with unknown prop '${key}'`);
     	});
 
-    	const click_handler = unterthema => onClickFach(unterthema["Unterthema"]);
-    	const click_handler_1 = UnterUnterthema => onClickUnterFach(UnterUnterthema["Name"]);
-    	const click_handler_2 = prof => onClickProf(prof["Name"]);
+    	const click_handler = () => onClickFach(data["Unterthemen"]["Unterthema"]);
 
     	$$self.$$set = $$props => {
     		if ('data' in $$props) $$invalidate(0, data = $$props.data);
@@ -59393,21 +59182,18 @@ var app = (function () {
     		themengebiet_open,
     		fach_list,
     		prof_list,
-    		unter_fach_list,
     		onClickThemen,
     		onClickFach,
-    		onClickUnterFach,
     		onClickProf
     	});
 
     	$$self.$inject_state = $$props => {
-    		if ('arrow_down' in $$props) $$invalidate(5, arrow_down = $$props.arrow_down);
-    		if ('arrow_up' in $$props) $$invalidate(6, arrow_up = $$props.arrow_up);
+    		if ('arrow_down' in $$props) $$invalidate(4, arrow_down = $$props.arrow_down);
+    		if ('arrow_up' in $$props) $$invalidate(5, arrow_up = $$props.arrow_up);
     		if ('data' in $$props) $$invalidate(0, data = $$props.data);
     		if ('themengebiet_open' in $$props) $$invalidate(1, themengebiet_open = $$props.themengebiet_open);
     		if ('fach_list' in $$props) $$invalidate(2, fach_list = $$props.fach_list);
     		if ('prof_list' in $$props) $$invalidate(3, prof_list = $$props.prof_list);
-    		if ('unter_fach_list' in $$props) $$invalidate(4, unter_fach_list = $$props.unter_fach_list);
     	};
 
     	if ($$props && "$$inject" in $$props) {
@@ -59419,16 +59205,12 @@ var app = (function () {
     		themengebiet_open,
     		fach_list,
     		prof_list,
-    		unter_fach_list,
     		arrow_down,
     		arrow_up,
     		onClickThemen,
     		onClickFach,
-    		onClickUnterFach,
     		onClickProf,
-    		click_handler,
-    		click_handler_1,
-    		click_handler_2
+    		click_handler
     	];
     }
 
